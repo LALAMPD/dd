@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from PIL import Image
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,10 +8,12 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from tqdm import tqdm
-from linear_Gmodel import VAEEncoder, BilinearModel, Generator, Discriminator, QNetwork
-from dataloader import get_data_loader
+from PIL import Image
 import psutil
 import pynvml
+from torch.utils.data import TensorDataset, DataLoader
+from linear_Gmodel import VAEEncoder, BilinearModel, Generator, Discriminator, QNetwork
+from dataloader import get_data_loader
 
 # Initialize NVML
 pynvml.nvmlInit()
@@ -36,7 +37,54 @@ dp_channels = 1  # Number of channels in depth maps
 # Initialize data loader
 root_dir = './dataset/data'
 png_dir = './dataset/images'
-data_loader = get_data_loader(root_dir, png_dir, batch_size, num_workers=16)  # Increase num_workers
+
+# Load all data into memory with progress bar
+def load_data_to_memory(root_dir, png_dir):
+    data_loader = get_data_loader(root_dir, png_dir, batch_size, num_workers=16)
+    all_uv_data = []
+    all_depth_data = []
+    all_real_images = []
+
+    total_batches = len(data_loader)
+    with tqdm(total=total_batches, desc="Loading data to memory") as pbar:
+        for uv_data, depth_data, real_images in data_loader:
+            all_uv_data.append(uv_data)
+            all_depth_data.append(depth_data)
+            all_real_images.append(real_images)
+            pbar.update(1)
+
+    all_uv_data = torch.cat(all_uv_data)
+    all_depth_data = torch.cat(all_depth_data)
+    all_real_images = torch.cat(all_real_images)
+
+    return all_uv_data, all_depth_data, all_real_images
+
+# Load data
+if not os.path.exists('preloaded_data.npz'):
+    all_uv_data, all_depth_data, all_real_images = load_data_to_memory(root_dir, png_dir)
+    np.savez('preloaded_data.npz', uv_data=all_uv_data.numpy(), depth_data=all_depth_data.numpy(), real_images=all_real_images.numpy())
+else:
+    loaded_data = np.load('preloaded_data.npz')
+    all_uv_data = torch.tensor(loaded_data['uv_data'])
+    all_depth_data = torch.tensor(loaded_data['depth_data'])
+    all_real_images = torch.tensor(loaded_data['real_images'])
+
+# Verify data loading
+print(f"UV data shape: {all_uv_data.shape}, type: {all_uv_data.dtype}")
+print(f"Depth data shape: {all_depth_data.shape}, type: {all_depth_data.dtype}")
+print(f"Real images shape: {all_real_images.shape}, type: {all_real_images.dtype}")
+
+# Create TensorDataset and DataLoader
+dataset = TensorDataset(all_uv_data, all_depth_data, all_real_images)
+data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+
+# Monitor memory usage
+def monitor_memory():
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    return mem_info.rss / (1024 ** 2)  # Convert to MB
+
+print(f"Memory usage after loading data: {monitor_memory()} MB")
 
 # Initialize models
 vae_encoder = VAEEncoder(uv_channels, dp_channels, latent_dim=latent_dim).to(device)
@@ -236,7 +284,7 @@ def visualize_latent_vectors(latent_vectors, epoch, output_dir='latent_vectors1'
     plt.close()
 
 # Training process
-epochs = 20
+epochs = 24
 
 for epoch in range(epochs):
     # Initialize timing accumulators
@@ -308,7 +356,6 @@ for epoch in range(epochs):
             # Update progress bar
             pbar.update(1)
 
-            
     # Record average loss values for the epoch
     if num_batches > 0:
         d_losses.append(epoch_d_loss / num_batches)

@@ -2,8 +2,10 @@ import os
 import numpy as np
 from PIL import Image
 import torch
-print(torch.__version__)
-print(torch.cuda.is_available())
+print(torch.cuda.is_available())  # 应该返回 True
+print(torch.backends.cudnn.enabled)  # 应该返回 True
+print(torch.cuda.current_device())  # 应该返回 0
+print(torch.cuda.get_device_name(0))  # 应该返回你的 GPU 名称
 import torch.nn as nn
 import torch.optim as optim
 import time
