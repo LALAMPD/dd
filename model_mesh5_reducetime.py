@@ -201,52 +201,52 @@ class QNetwork(nn.Module):
  
 # ################### test ###################
  
-# Parameters
-batch_size = 8
-latent_dim = 100
-code_dim = 10
-uv_channels = 3
-dp_channels = 1
-image_size = (uv_channels, 128, 128)
-depth_size = (dp_channels, 128, 128)
+# # Parameters
+# batch_size = 8
+# latent_dim = 100
+# code_dim = 10
+# uv_channels = 3
+# dp_channels = 1
+# image_size = (uv_channels, 128, 128)
+# depth_size = (dp_channels, 128, 128)
  
-# Instantiate models
-vae_encoder = VAEEncoder(uv_channels, dp_channels, latent_dim)
-bilinear_model = BilinearModel(latent_dim, code_dim)
-generator = Generator(latent_dim, code_dim)
-discriminator = Discriminator()
-qnetwork = QNetwork(code_dim)
+# # Instantiate models
+# vae_encoder = VAEEncoder(uv_channels, dp_channels, latent_dim)
+# bilinear_model = BilinearModel(latent_dim, code_dim)
+# generator = Generator(latent_dim, code_dim)
+# discriminator = Discriminator()
+# qnetwork = QNetwork(code_dim)
  
-# Test VAEEncoder
-uv = torch.randn(batch_size, *image_size) # Random UV image
-depth = torch.randn(batch_size, *depth_size) # Random depth image
-mu, logvar = vae_encoder(uv, depth)
-print(f"VAE Encoder output shapes: mu={mu.shape}, logvar={logvar.shape}")
+# # Test VAEEncoder
+# uv = torch.randn(batch_size, *image_size) # Random UV image
+# depth = torch.randn(batch_size, *depth_size) # Random depth image
+# mu, logvar = vae_encoder(uv, depth)
+# print(f"VAE Encoder output shapes: mu={mu.shape}, logvar={logvar.shape}")
  
-# Test BilinearModel
-z = torch.randn(batch_size, latent_dim)
-c = torch.randn(batch_size, code_dim)
-combined = bilinear_model(z, c)
-print(f"Bilinear Model output shape: {combined.shape}")
+# # Test BilinearModel
+# z = torch.randn(batch_size, latent_dim)
+# c = torch.randn(batch_size, code_dim)
+# combined = bilinear_model(z, c)
+# print(f"Bilinear Model output shape: {combined.shape}")
  
-# Test Generator
-generated_image = generator(z, c)
-print(f"Generated image shape: {generated_image.shape}")
+# # Test Generator
+# generated_image = generator(z, c)
+# print(f"Generated image shape: {generated_image.shape}")
  
-# Test Discriminator
-validity = discriminator(generated_image)
-print(f"Discriminator output shape: {validity.shape}")
+# # Test Discriminator
+# validity = discriminator(generated_image)
+# print(f"Discriminator output shape: {validity.shape}")
  
-# Test QNetwork
-code = qnetwork(generated_image)
-print(f"QNetwork output shape: {code.shape}")
+# # Test QNetwork
+# code = qnetwork(generated_image)
+# print(f"QNetwork output shape: {code.shape}")
  
-# Check output shapes to ensure they match expectations
-assert mu.shape == (batch_size, latent_dim), f"VAE Encoder mu shape mismatch: {mu.shape}"
-assert logvar.shape == (batch_size, latent_dim), f"VAE Encoder logvar shape mismatch: {logvar.shape}"
-assert combined.shape == (batch_size, latent_dim + code_dim), f"Bilinear Model shape mismatch: {combined.shape}"
-assert generated_image.shape == (batch_size, 3, 128, 128), f"Generated image shape mismatch: {generated_image.shape}"
-assert validity.shape == (batch_size, 1), f"Discriminator output shape mismatch: {validity.shape}"
-assert code.shape == (batch_size, code_dim), f"QNetwork output shape mismatch: {code.shape}"
+# # Check output shapes to ensure they match expectations
+# assert mu.shape == (batch_size, latent_dim), f"VAE Encoder mu shape mismatch: {mu.shape}"
+# assert logvar.shape == (batch_size, latent_dim), f"VAE Encoder logvar shape mismatch: {logvar.shape}"
+# assert combined.shape == (batch_size, latent_dim + code_dim), f"Bilinear Model shape mismatch: {combined.shape}"
+# assert generated_image.shape == (batch_size, 3, 128, 128), f"Generated image shape mismatch: {generated_image.shape}"
+# assert validity.shape == (batch_size, 1), f"Discriminator output shape mismatch: {validity.shape}"
+# assert code.shape == (batch_size, code_dim), f"QNetwork output shape mismatch: {code.shape}"
  
-print("All tests passed!")
+# print("All tests passed!")

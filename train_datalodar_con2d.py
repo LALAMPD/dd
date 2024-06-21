@@ -12,7 +12,7 @@ from PIL import Image
 import psutil
 import pynvml
 from torch.utils.data import TensorDataset, DataLoader
-from linear_Gmodel import VAEEncoder, BilinearModel, Generator, Discriminator, QNetwork
+from model_mesh5_reducetime import VAEEncoder, BilinearModel, Generator, Discriminator, QNetwork
 from dataloader import get_data_loader
 
 # Initialize NVML
@@ -220,7 +220,7 @@ def save_model(generator, discriminator, g_optimizer, d_optimizer, epoch, path="
     }, path)
 
 # Function to save generated images and corresponding 3D point clouds
-def save_image_and_obj(fake_images, epoch, output_dir='output_flow6'):
+def save_image_and_obj(fake_images, epoch, output_dir='output_flow5'):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
@@ -264,13 +264,13 @@ def plot_weight_norms(g_weight_norms, d_weight_norms):
     plt.show()
 
 # Function to save latent vectors
-def save_latent_vectors(latent_vectors, epoch, output_dir='latent_vectors1'):
+def save_latent_vectors(latent_vectors, epoch, output_dir='latent_vectors'):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     np.save(os.path.join(output_dir, f'latent_vectors_epoch_{epoch}.npy'), latent_vectors)
 
 # Function to visualize latent vectors and save the plot
-def visualize_latent_vectors(latent_vectors, epoch, output_dir='latent_vectors1'):
+def visualize_latent_vectors(latent_vectors, epoch, output_dir='latent_vectors'):
     pca = PCA(n_components=2)
     latent_vectors_2d = pca.fit_transform(latent_vectors)
     plt.figure(figsize=(8, 6))
